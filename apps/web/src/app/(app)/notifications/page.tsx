@@ -1,3 +1,4 @@
+import { MarkAllReadButton } from "@/components/notifications/mark-all-read-button";
 import { ReconnectBanner } from "@/components/store-accounts/reconnect-banner";
 import { listNotifications } from "@shopping/db";
 import { storeAccountsRepository } from "@shopping/db";
@@ -11,12 +12,14 @@ export default async function NotificationsPage() {
     storeAccountsRepository.listByUserId(user.id),
   ]);
   const reconnectStores = accounts.filter((account) => account.sessionStatus === "reauth_required");
+  const hasUnread = items.some((item) => item.readAt === null);
 
   return (
     <div className="space-y-4">
       <section className="rounded-2xl bg-white p-4 shadow-sm">
         <h1 className="text-lg font-semibold text-slate-950">Alerts</h1>
         <p className="mt-1 text-sm text-slate-600">Price drops and sale starts for your watched products.</p>
+        {hasUnread ? <MarkAllReadButton /> : null}
       </section>
 
       {reconnectStores.map((account) => (

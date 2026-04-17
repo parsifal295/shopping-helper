@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "../client";
 import { canonicalProducts, userNotifications } from "../schema";
 
@@ -51,4 +51,18 @@ export async function createNotification(input: {
     .returning();
 
   return notification;
+}
+
+export async function markAllNotificationsRead(userId: string, now: Date) {
+  const updated = await db
+    .update(userNotifications)
+    .set({
+      readAt: now,
+    })
+    .where(and(eq(userNotifications.userId, userId), isNull(userNotifications.readAt)))
+    .returning({ id: userNotifications.id });
+
+  return {
+    updatedCount: updated.length,
+  };
 }
