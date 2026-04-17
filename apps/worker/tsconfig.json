@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM"],
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@shopping/core": ["../../packages/core/src/index.ts"],
+      "@shopping/db": ["../../packages/db/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts"]
 }
