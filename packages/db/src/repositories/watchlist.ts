@@ -210,10 +210,13 @@ export async function listWatchlistView(userId: string) {
       productName: canonicalProducts.normalizedName,
       brand: canonicalProducts.brand,
       imageUrl: canonicalProducts.imageUrl,
+      pollingIntervalMinutes: userWatchlistItems.pollingIntervalMinutes,
+      nextRunAt: watchlistSyncState.nextRunAt,
     })
     .from(userWatchlistItems)
     .innerJoin(canonicalProducts, eq(userWatchlistItems.canonicalProductId, canonicalProducts.id))
-    .where(eq(userWatchlistItems.userId, userId));
+    .innerJoin(watchlistSyncState, eq(watchlistSyncState.watchlistItemId, userWatchlistItems.id))
+    .where(and(eq(userWatchlistItems.userId, userId), eq(userWatchlistItems.active, true)));
 
   const snapshots = await listSnapshotsForProducts(
     userId,
@@ -249,10 +252,12 @@ export async function listWatchlistView(userId: string) {
       coupangPrice: coupang?.price ?? null,
       ssgPrice: ssg?.price ?? null,
       cheaperStore: cheaper?.store ?? null,
+      pollingIntervalMinutes: item.pollingIntervalMinutes,
       lastCapturedAt: [coupang?.capturedAt, ssg?.capturedAt]
         .filter(Boolean)
         .sort((left, right) => new Date(right as Date).getTime() - new Date(left as Date).getTime())[0]
         ?.toISOString() ?? null,
+      nextRunAt: item.nextRunAt.toISOString(),
     };
   });
 }
@@ -271,6 +276,47 @@ export async function userOwnsWatchlistItem(userId: string, watchlistItemId: str
     .limit(1);
 
   return Boolean(watchlistItem);
+}
+
+export async function updateWatchlistPollingInterval(input: {
+  userId: string;
+  watchlistItemId: string;
+  pollingIntervalMinutes: number;
+  now: Date;
+}) {
+  return db.transaction(async (tx) => {
+    const [watchlistItem] = await tx
+      .update(userWatchlistItems)
+      .set({
+        pollingIntervalMinutes: input.pollingIntervalMinutes,
+      })
+      .where(
+        and(
+          eq(userWatchlistItems.userId, input.userId),
+          eq(userWatchlistItems.id, input.watchlistItemId),
+          eq(userWatchlistItems.active, true),
+        ),
+      )
+      .returning({ id: userWatchlistItems.id });
+
+    if (!watchlistItem) {
+      return null;
+    }
+
+    const nextRunAt = new Date(input.now.getTime() + input.pollingIntervalMinutes * 60_000);
+    await tx
+      .update(watchlistSyncState)
+      .set({
+        nextRunAt,
+      })
+      .where(eq(watchlistSyncState.watchlistItemId, input.watchlistItemId));
+
+    return {
+      id: watchlistItem.id,
+      pollingIntervalMinutes: input.pollingIntervalMinutes,
+      nextRunAt,
+    };
+  });
 }
 
 export async function listDueWatchlistItemIds(now: Date, limit: number) {

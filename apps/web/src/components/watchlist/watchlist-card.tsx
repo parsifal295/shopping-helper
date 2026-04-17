@@ -1,4 +1,5 @@
 import { ManualRefreshButton } from "./manual-refresh-button";
+import { PollingIntervalControl } from "./polling-interval-control";
 
 type WatchlistView = {
   id: string;
@@ -7,7 +8,9 @@ type WatchlistView = {
   coupangPrice: number | null;
   ssgPrice: number | null;
   cheaperStore: "coupang" | "ssg" | null;
+  pollingIntervalMinutes: number;
   lastCapturedAt: string | null;
+  nextRunAt: string;
 };
 
 function renderStorePrice(label: string, price: number | null) {
@@ -30,9 +33,16 @@ export function WatchlistCard({ item }: { item: WatchlistView }) {
               {item.cheaperStore} is cheaper
             </span>
           ) : null}
+          <p className="mt-2 text-xs text-slate-500">
+            Checks every {item.pollingIntervalMinutes} min · Next check {new Date(item.nextRunAt).toLocaleString("en-US")}
+          </p>
           {item.lastCapturedAt ? (
             <p className="mt-2 text-xs text-slate-500">Updated {new Date(item.lastCapturedAt).toLocaleString("en-US")}</p>
           ) : null}
+          <PollingIntervalControl
+            initialPollingIntervalMinutes={item.pollingIntervalMinutes}
+            watchlistItemId={item.id}
+          />
           <ManualRefreshButton watchlistItemId={item.id} />
         </div>
       </div>
