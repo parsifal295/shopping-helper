@@ -44,6 +44,7 @@ async function createWorkerDependencies(): Promise<WorkerCycleDeps> {
     listDueWatchlistItemIds,
     loadWatchlistRefreshContext,
     saveSnapshot,
+    storeAccountsRepository,
     updateWatchlistSyncState,
   } = await import("@shopping/db");
 
@@ -64,6 +65,7 @@ async function createWorkerDependencies(): Promise<WorkerCycleDeps> {
           loadPreviousSnapshot: getLatestSnapshotForProductStore,
           saveSnapshot,
           createNotification,
+          setStoreSessionStatus: storeAccountsRepository.setSessionStatus,
           logCollectionEvent,
           updateSyncState: updateWatchlistSyncState,
           collectOffer(input) {

@@ -1,4 +1,5 @@
 import { buildNotifications } from "@shopping/core";
+import { CollectionError } from "../stores/collection-error";
 
 type Store = "coupang" | "ssg";
 
@@ -57,6 +58,11 @@ export async function refreshWatchlistItem(
       winningStore: Store;
       previousPrice: number | null;
       currentPrice: number;
+    }): Promise<unknown>;
+    setStoreSessionStatus(input: {
+      userId: string;
+      store: Store;
+      sessionStatus: "active" | "reauth_required";
     }): Promise<unknown>;
     logCollectionEvent(input: {
       watchlistItemId: string;
@@ -147,8 +153,21 @@ export async function refreshWatchlistItem(
           currentPrice: offer.price,
         });
       }
-    } catch {
-      const errorCode = `collect_${reference.store}`;
+    } catch (error) {
+      const errorCode =
+        error instanceof CollectionError && error.code === "auth_required" ? `auth_${reference.store}` :
+        error instanceof CollectionError && error.code === "parse_failed" ? `parse_${reference.store}` :
+        error instanceof CollectionError && error.code === "request_failed" ? `request_${reference.store}` :
+        `collect_${reference.store}`;
+
+      if (error instanceof CollectionError && error.code === "auth_required") {
+        await deps.setStoreSessionStatus({
+          userId: watchlistItem.userId,
+          store: reference.store,
+          sessionStatus: "reauth_required",
+        });
+      }
+
       firstErrorCode ??= errorCode;
       deps.logCollectionEvent({
         watchlistItemId,

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { refreshWatchlistItem } from "./refresh-watchlist-item";
+import { CollectionError } from "../stores/collection-error";
 
 describe("refreshWatchlistItem", () => {
   it("saves eligible offers, emits notifications, and marks sync success", async () => {
@@ -8,6 +9,7 @@ describe("refreshWatchlistItem", () => {
       async (_input: { type: "sale_started" | "price_dropped" }) => undefined,
     );
     const logCollectionEvent = vi.fn();
+    const setStoreSessionStatus = vi.fn(async () => undefined);
     const updateSyncState = vi.fn(async () => undefined);
     const loadPreviousSnapshot = vi
       .fn()
@@ -33,6 +35,7 @@ describe("refreshWatchlistItem", () => {
         saveSnapshot,
         createNotification,
         logCollectionEvent,
+        setStoreSessionStatus,
         updateSyncState,
         collectOffer: vi
           .fn()
@@ -80,12 +83,14 @@ describe("refreshWatchlistItem", () => {
       lastStatus: "success",
       lastErrorCode: null,
     });
+    expect(setStoreSessionStatus).not.toHaveBeenCalled();
   });
 
   it("marks sync partial when one store fails but another succeeds", async () => {
     const saveSnapshot = vi.fn(async () => undefined);
     const logCollectionEvent = vi.fn();
     const updateSyncState = vi.fn(async () => undefined);
+    const setStoreSessionStatus = vi.fn(async () => undefined);
 
     await refreshWatchlistItem(
       {
@@ -106,6 +111,7 @@ describe("refreshWatchlistItem", () => {
         saveSnapshot,
         createNotification: vi.fn(async () => undefined),
         logCollectionEvent,
+        setStoreSessionStatus,
         updateSyncState,
         collectOffer: vi
           .fn()
@@ -143,6 +149,42 @@ describe("refreshWatchlistItem", () => {
       nextRunAt: new Date("2026-04-17T08:30:00.000Z"),
       lastStatus: "partial",
       lastErrorCode: "collect_coupang",
+    });
+    expect(setStoreSessionStatus).not.toHaveBeenCalled();
+  });
+
+  it("marks the linked account as reauth required when collection fails due to auth state", async () => {
+    const setStoreSessionStatus = vi.fn(async () => undefined);
+
+    await refreshWatchlistItem(
+      {
+        loadWatchlistItem: async () => ({
+          userId: "user-1",
+          canonicalProductId: "product-1",
+          pollingIntervalMinutes: 30,
+          encryptedSessionJsonByStore: {
+            coupang: "enc-coupang",
+          },
+          storeReferences: [
+            { store: "coupang", productUrl: "https://www.coupang.com/products/1" },
+          ],
+        }),
+        loadPreviousSnapshot: vi.fn().mockResolvedValue(null),
+        saveSnapshot: vi.fn(async () => undefined),
+        createNotification: vi.fn(async () => undefined),
+        logCollectionEvent: vi.fn(),
+        setStoreSessionStatus,
+        updateSyncState: vi.fn(async () => undefined),
+        collectOffer: vi.fn().mockRejectedValueOnce(new CollectionError("auth_required", "auth required")),
+      },
+      "watch-1",
+      new Date("2026-04-17T08:00:00.000Z"),
+    );
+
+    expect(setStoreSessionStatus).toHaveBeenCalledWith({
+      userId: "user-1",
+      store: "coupang",
+      sessionStatus: "reauth_required",
     });
   });
 });

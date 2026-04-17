@@ -8,6 +8,10 @@ type WatchlistView = {
   lastCapturedAt: string | null;
 };
 
+function renderStorePrice(label: string, price: number | null) {
+  return price === null ? `${label} Latest info unavailable` : `${label} ${price}원`;
+}
+
 export function WatchlistCard({ item }: { item: WatchlistView }) {
   return (
     <article className="rounded-2xl bg-white p-4 shadow-sm">
@@ -17,12 +21,15 @@ export function WatchlistCard({ item }: { item: WatchlistView }) {
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-medium text-slate-950">{item.productName}</h2>
-          <p className="mt-1 text-sm text-slate-600">Coupang {item.coupangPrice ?? "-"}원</p>
-          <p className="text-sm text-slate-600">SSG {item.ssgPrice ?? "-"}원</p>
+          <p className="mt-1 text-sm text-slate-600">{renderStorePrice("Coupang", item.coupangPrice)}</p>
+          <p className="text-sm text-slate-600">{renderStorePrice("SSG", item.ssgPrice)}</p>
           {item.cheaperStore ? (
             <span className="mt-2 inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
               {item.cheaperStore} is cheaper
             </span>
+          ) : null}
+          {item.lastCapturedAt ? (
+            <p className="mt-2 text-xs text-slate-500">Updated {new Date(item.lastCapturedAt).toLocaleString("en-US")}</p>
           ) : null}
         </div>
       </div>
