@@ -1,0 +1,15 @@
+{
+  "name": "shopping-helper",
+  "private": true,
+  "packageManager": "pnpm@10.14.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @shopping/web dev",
+    "dev:worker": "pnpm --filter @shopping/worker dev",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @shopping/web test:e2e",
+    "db:generate": "pnpm --filter @shopping/db db:generate",
+    "db:migrate": "pnpm --filter @shopping/db db:migrate",
+    "db:seed": "pnpm --filter @shopping/db db:seed"
+  }
+}
