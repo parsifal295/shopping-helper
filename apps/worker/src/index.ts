@@ -1,6 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { getShoppingEnv } from "@shopping/core";
 import { refreshWatchlistItem as runRefreshWatchlistItem } from "./jobs/refresh-watchlist-item";
+import { logCollectionEvent } from "./logging/collection-logger";
 import { claimDueWatchlistItems } from "./scheduler/claim-due-watchlist-items";
 import { collectCoupangOffer } from "./stores/coupang/collect-offer";
 import { collectSsgOffer } from "./stores/ssg/collect-offer";
@@ -63,6 +64,7 @@ async function createWorkerDependencies(): Promise<WorkerCycleDeps> {
           loadPreviousSnapshot: getLatestSnapshotForProductStore,
           saveSnapshot,
           createNotification,
+          logCollectionEvent,
           updateSyncState: updateWatchlistSyncState,
           collectOffer(input) {
             return input.store === "coupang"

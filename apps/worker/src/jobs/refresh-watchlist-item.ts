@@ -58,6 +58,12 @@ export async function refreshWatchlistItem(
       previousPrice: number | null;
       currentPrice: number;
     }): Promise<unknown>;
+    logCollectionEvent(input: {
+      watchlistItemId: string;
+      store: Store;
+      status: "success" | "error";
+      errorCode?: string;
+    }): void;
     updateSyncState(input: {
       watchlistItemId: string;
       lastRunAt: Date;
@@ -109,6 +115,11 @@ export async function refreshWatchlistItem(
       });
 
       successfulStores += 1;
+      deps.logCollectionEvent({
+        watchlistItemId,
+        store: reference.store,
+        status: "success",
+      });
 
       const notifications = buildNotifications({
         previous:
@@ -137,7 +148,14 @@ export async function refreshWatchlistItem(
         });
       }
     } catch {
-      firstErrorCode ??= `collect_${reference.store}`;
+      const errorCode = `collect_${reference.store}`;
+      firstErrorCode ??= errorCode;
+      deps.logCollectionEvent({
+        watchlistItemId,
+        store: reference.store,
+        status: "error",
+        errorCode,
+      });
     }
   }
 

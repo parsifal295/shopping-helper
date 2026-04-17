@@ -7,6 +7,7 @@ describe("refreshWatchlistItem", () => {
     const createNotification = vi.fn(
       async (_input: { type: "sale_started" | "price_dropped" }) => undefined,
     );
+    const logCollectionEvent = vi.fn();
     const updateSyncState = vi.fn(async () => undefined);
     const loadPreviousSnapshot = vi
       .fn()
@@ -31,6 +32,7 @@ describe("refreshWatchlistItem", () => {
         loadPreviousSnapshot,
         saveSnapshot,
         createNotification,
+        logCollectionEvent,
         updateSyncState,
         collectOffer: vi
           .fn()
@@ -60,6 +62,16 @@ describe("refreshWatchlistItem", () => {
     );
 
     expect(saveSnapshot).toHaveBeenCalledTimes(2);
+    expect(logCollectionEvent).toHaveBeenNthCalledWith(1, {
+      watchlistItemId: "watch-1",
+      store: "coupang",
+      status: "success",
+    });
+    expect(logCollectionEvent).toHaveBeenNthCalledWith(2, {
+      watchlistItemId: "watch-1",
+      store: "ssg",
+      status: "success",
+    });
     expect(createNotification.mock.calls.map((call) => call[0]?.type)).toEqual(["sale_started", "price_dropped"]);
     expect(updateSyncState).toHaveBeenCalledWith({
       watchlistItemId: "watch-1",
@@ -72,6 +84,7 @@ describe("refreshWatchlistItem", () => {
 
   it("marks sync partial when one store fails but another succeeds", async () => {
     const saveSnapshot = vi.fn(async () => undefined);
+    const logCollectionEvent = vi.fn();
     const updateSyncState = vi.fn(async () => undefined);
 
     await refreshWatchlistItem(
@@ -92,6 +105,7 @@ describe("refreshWatchlistItem", () => {
         loadPreviousSnapshot: vi.fn().mockResolvedValue(null),
         saveSnapshot,
         createNotification: vi.fn(async () => undefined),
+        logCollectionEvent,
         updateSyncState,
         collectOffer: vi
           .fn()
@@ -112,6 +126,17 @@ describe("refreshWatchlistItem", () => {
     );
 
     expect(saveSnapshot).toHaveBeenCalledTimes(1);
+    expect(logCollectionEvent).toHaveBeenNthCalledWith(1, {
+      watchlistItemId: "watch-1",
+      store: "coupang",
+      status: "error",
+      errorCode: "collect_coupang",
+    });
+    expect(logCollectionEvent).toHaveBeenNthCalledWith(2, {
+      watchlistItemId: "watch-1",
+      store: "ssg",
+      status: "success",
+    });
     expect(updateSyncState).toHaveBeenCalledWith({
       watchlistItemId: "watch-1",
       lastRunAt: new Date("2026-04-17T08:00:00.000Z"),
