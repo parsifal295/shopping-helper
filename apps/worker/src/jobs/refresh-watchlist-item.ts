@@ -19,6 +19,13 @@ type CollectedOffer = {
   eligible: boolean;
 };
 
+export type RefreshWatchlistItemResult = {
+  status: "success" | "partial" | "failed";
+  lastErrorCode: string | null;
+  processedStores: number;
+  successfulStores: number;
+};
+
 export async function refreshWatchlistItem(
   deps: {
     loadWatchlistItem(id: string): Promise<{
@@ -80,9 +87,30 @@ export async function refreshWatchlistItem(
   },
   watchlistItemId: string,
   now = new Date(),
-) {
+): Promise<RefreshWatchlistItemResult> {
   const watchlistItem = await deps.loadWatchlistItem(watchlistItemId);
   const nextRunAt = new Date(now.getTime() + watchlistItem.pollingIntervalMinutes * 60_000);
+  const hasActiveSession = watchlistItem.storeReferences.some(
+    (reference) => Boolean(watchlistItem.encryptedSessionJsonByStore[reference.store]),
+  );
+
+  if (!hasActiveSession) {
+    await deps.updateSyncState({
+      watchlistItemId,
+      lastRunAt: now,
+      nextRunAt,
+      lastStatus: "failed",
+      lastErrorCode: "no_active_sessions",
+    });
+
+    return {
+      status: "failed" as const,
+      lastErrorCode: "no_active_sessions",
+      processedStores: 0,
+      successfulStores: 0,
+    };
+  }
+
   let successfulStores = 0;
   let processedStores = 0;
   let firstErrorCode: string | null = null;

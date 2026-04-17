@@ -1,6 +1,9 @@
 import { pathToFileURL } from "node:url";
 import { getShoppingEnv } from "@shopping/core";
-import { refreshWatchlistItem as runRefreshWatchlistItem } from "./jobs/refresh-watchlist-item";
+import {
+  refreshWatchlistItem as runRefreshWatchlistItem,
+  type RefreshWatchlistItemResult,
+} from "./jobs/refresh-watchlist-item";
 import { logCollectionEvent } from "./logging/collection-logger";
 import { claimDueWatchlistItems } from "./scheduler/claim-due-watchlist-items";
 import { collectCoupangOffer } from "./stores/coupang/collect-offer";
@@ -8,7 +11,7 @@ import { collectSsgOffer } from "./stores/ssg/collect-offer";
 
 type WorkerCycleDeps = {
   claimDueWatchlistItems(now: Date, limit: number): Promise<{ watchlistItemId: string }[]>;
-  refreshWatchlistItem(watchlistItemId: string, now: Date): Promise<{ status: "success" | "partial" | "failed" }>;
+  refreshWatchlistItem(watchlistItemId: string, now: Date): Promise<RefreshWatchlistItemResult>;
 };
 
 export async function runWorkerCycle(
@@ -87,6 +90,14 @@ async function createWorkerDependencies(): Promise<WorkerCycleDeps> {
       );
     },
   };
+}
+
+export async function runRefreshOnce(
+  watchlistItemId: string,
+  now = new Date(),
+): Promise<RefreshWatchlistItemResult> {
+  const deps = await createWorkerDependencies();
+  return deps.refreshWatchlistItem(watchlistItemId, now);
 }
 
 async function main() {

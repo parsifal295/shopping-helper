@@ -21,7 +21,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "@shopping/db": ["../../packages/db/src/index.ts"],
-      "@shopping/core": ["../../packages/core/src/index.ts"]
+      "@shopping/core": ["../../packages/core/src/index.ts"],
+      "@shopping/worker": ["../../apps/worker/src/index.ts"]
     }
   },
   "include": [

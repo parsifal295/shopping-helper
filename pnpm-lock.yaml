@@ -16,6 +16,9 @@ importers:
       '@shopping/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@shopping/worker':
+        specifier: workspace:*
+        version: link:../worker
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3

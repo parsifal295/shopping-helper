@@ -1,3 +1,5 @@
+import { ManualRefreshButton } from "./manual-refresh-button";
+
 type WatchlistView = {
   id: string;
   productName: string;
@@ -31,6 +33,7 @@ export function WatchlistCard({ item }: { item: WatchlistView }) {
           {item.lastCapturedAt ? (
             <p className="mt-2 text-xs text-slate-500">Updated {new Date(item.lastCapturedAt).toLocaleString("en-US")}</p>
           ) : null}
+          <ManualRefreshButton watchlistItemId={item.id} />
         </div>
       </div>
     </article>

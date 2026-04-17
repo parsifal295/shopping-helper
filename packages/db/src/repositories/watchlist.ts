@@ -263,6 +263,16 @@ export async function getLinkedStoreAccount(userId: string, store: Store) {
   });
 }
 
+export async function userOwnsWatchlistItem(userId: string, watchlistItemId: string) {
+  const [watchlistItem] = await db
+    .select({ id: userWatchlistItems.id })
+    .from(userWatchlistItems)
+    .where(and(eq(userWatchlistItems.userId, userId), eq(userWatchlistItems.id, watchlistItemId)))
+    .limit(1);
+
+  return Boolean(watchlistItem);
+}
+
 export async function listDueWatchlistItemIds(now: Date, limit: number) {
   return db
     .select({

@@ -187,4 +187,45 @@ describe("refreshWatchlistItem", () => {
       sessionStatus: "reauth_required",
     });
   });
+
+  it("marks the sync as failed when no active store sessions are available", async () => {
+    const updateSyncState = vi.fn(async () => undefined);
+
+    const result = await refreshWatchlistItem(
+      {
+        loadWatchlistItem: async () => ({
+          userId: "user-1",
+          canonicalProductId: "product-1",
+          pollingIntervalMinutes: 30,
+          encryptedSessionJsonByStore: {},
+          storeReferences: [
+            { store: "coupang", productUrl: "https://www.coupang.com/products/1" },
+          ],
+        }),
+        loadPreviousSnapshot: vi.fn().mockResolvedValue(null),
+        saveSnapshot: vi.fn(async () => undefined),
+        createNotification: vi.fn(async () => undefined),
+        setStoreSessionStatus: vi.fn(async () => undefined),
+        logCollectionEvent: vi.fn(),
+        updateSyncState,
+        collectOffer: vi.fn(),
+      },
+      "watch-1",
+      new Date("2026-04-17T08:00:00.000Z"),
+    );
+
+    expect(result).toEqual({
+      status: "failed",
+      lastErrorCode: "no_active_sessions",
+      processedStores: 0,
+      successfulStores: 0,
+    });
+    expect(updateSyncState).toHaveBeenCalledWith({
+      watchlistItemId: "watch-1",
+      lastRunAt: new Date("2026-04-17T08:00:00.000Z"),
+      nextRunAt: new Date("2026-04-17T08:30:00.000Z"),
+      lastStatus: "failed",
+      lastErrorCode: "no_active_sessions",
+    });
+  });
 });

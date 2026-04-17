@@ -1,5 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("./manual-refresh-button", () => ({
+  ManualRefreshButton: ({ watchlistItemId }: { watchlistItemId: string }) => (
+    <button type="button">Refresh {watchlistItemId}</button>
+  ),
+}));
+
 import { WatchlistCard } from "./watchlist-card";
 
 describe("WatchlistCard", () => {
