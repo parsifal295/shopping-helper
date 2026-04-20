@@ -66,3 +66,25 @@ export async function markAllNotificationsRead(userId: string, now: Date) {
     updatedCount: updated.length,
   };
 }
+
+export async function markNotificationRead(input: {
+  userId: string;
+  notificationId: string;
+  now: Date;
+}) {
+  const [updated] = await db
+    .update(userNotifications)
+    .set({
+      readAt: input.now,
+    })
+    .where(
+      and(
+        eq(userNotifications.userId, input.userId),
+        eq(userNotifications.id, input.notificationId),
+        isNull(userNotifications.readAt),
+      ),
+    )
+    .returning({ id: userNotifications.id });
+
+  return updated ?? null;
+}

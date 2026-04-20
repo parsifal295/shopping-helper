@@ -1,4 +1,5 @@
 import { ReconnectBanner } from "@/components/store-accounts/reconnect-banner";
+import { StoreConnectionStatus } from "@/components/store-accounts/store-connection-status";
 import { requireUser } from "@/lib/require-user";
 import { storeAccountsRepository } from "@shopping/db";
 
@@ -22,9 +23,17 @@ export default async function ConnectionsPage() {
           <form action={`/api/store-accounts/${store}`} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm" method="post">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium capitalize text-slate-700">{store}</label>
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                {byStore.get(store)?.sessionStatus ?? "not connected"}
-              </span>
+              <StoreConnectionStatus
+                account={
+                  byStore.get(store)
+                    ? {
+                        sessionStatus: byStore.get(store)!.sessionStatus,
+                        lastValidatedAt: byStore.get(store)!.lastValidatedAt?.toISOString() ?? null,
+                        reauthRequiredAt: byStore.get(store)!.reauthRequiredAt?.toISOString() ?? null,
+                      }
+                    : null
+                }
+              />
             </div>
 
             <textarea
