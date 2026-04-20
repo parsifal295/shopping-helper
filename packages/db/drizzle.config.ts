@@ -1,10 +1,5 @@
-import { config as loadEnv } from "dotenv";
 import { defineConfig } from "drizzle-kit";
 import { getShoppingEnv } from "@shopping/core";
-
-loadEnv({
-  path: new URL("../../.env", import.meta.url).pathname,
-});
 
 export default defineConfig({
   schema: "./src/schema.ts",

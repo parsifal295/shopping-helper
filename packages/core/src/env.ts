@@ -1,4 +1,17 @@
+import { config as loadEnv, type DotenvConfigOptions } from "dotenv";
 import { z } from "zod";
+
+const DEFAULT_ENV_PATH = new URL("../../../.env", import.meta.url).pathname;
+
+export function loadShoppingEnv(options: DotenvConfigOptions = {}) {
+  return loadEnv({
+    path: DEFAULT_ENV_PATH,
+    quiet: true,
+    ...options,
+  });
+}
+
+loadShoppingEnv();
 
 const ShoppingEnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
