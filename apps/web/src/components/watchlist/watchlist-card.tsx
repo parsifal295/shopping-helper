@@ -1,5 +1,6 @@
 import { ManualRefreshButton } from "./manual-refresh-button";
 import { PollingIntervalControl } from "./polling-interval-control";
+import { RemoveWatchlistButton } from "./remove-watchlist-button";
 
 type WatchlistView = {
   id: string;
@@ -44,6 +45,7 @@ export function WatchlistCard({ item }: { item: WatchlistView }) {
             watchlistItemId={item.id}
           />
           <ManualRefreshButton watchlistItemId={item.id} />
+          <RemoveWatchlistButton productName={item.productName} watchlistItemId={item.id} />
         </div>
       </div>
     </article>

@@ -108,13 +108,23 @@ async function ensureWatchlistItem(input: {
     .limit(1);
 
   const item =
-    existing ??
-    (
-      await db
-        .insert(userWatchlistItems)
-        .values(input)
-        .returning()
-    )[0];
+    existing ?
+      (
+        await db
+          .update(userWatchlistItems)
+          .set({
+            pollingIntervalMinutes: input.pollingIntervalMinutes,
+            active: true,
+          })
+          .where(eq(userWatchlistItems.id, existing.id))
+          .returning()
+      )[0]
+    : (
+        await db
+          .insert(userWatchlistItems)
+          .values(input)
+          .returning()
+      )[0];
 
   const nextRunAt = new Date(Date.now() + input.pollingIntervalMinutes * 60_000);
   const [existingSync] = await db
@@ -129,6 +139,13 @@ async function ensureWatchlistItem(input: {
       nextRunAt,
       lastStatus: "idle",
     });
+  } else {
+    await db
+      .update(watchlistSyncState)
+      .set({
+        nextRunAt,
+      })
+      .where(eq(watchlistSyncState.watchlistItemId, item.id));
   }
 
   return item;
@@ -317,6 +334,27 @@ export async function updateWatchlistPollingInterval(input: {
       nextRunAt,
     };
   });
+}
+
+export async function deactivateWatchlistItem(input: {
+  userId: string;
+  watchlistItemId: string;
+}) {
+  const [watchlistItem] = await db
+    .update(userWatchlistItems)
+    .set({
+      active: false,
+    })
+    .where(
+      and(
+        eq(userWatchlistItems.userId, input.userId),
+        eq(userWatchlistItems.id, input.watchlistItemId),
+        eq(userWatchlistItems.active, true),
+      ),
+    )
+    .returning({ id: userWatchlistItems.id });
+
+  return watchlistItem ?? null;
 }
 
 export async function listDueWatchlistItemIds(now: Date, limit: number) {

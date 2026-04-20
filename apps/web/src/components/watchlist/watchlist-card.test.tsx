@@ -13,6 +13,12 @@ vi.mock("./polling-interval-control", () => ({
   ),
 }));
 
+vi.mock("./remove-watchlist-button", () => ({
+  RemoveWatchlistButton: ({ watchlistItemId }: { watchlistItemId: string }) => (
+    <button type="button">Remove {watchlistItemId}</button>
+  ),
+}));
+
 import { WatchlistCard } from "./watchlist-card";
 
 describe("WatchlistCard", () => {
